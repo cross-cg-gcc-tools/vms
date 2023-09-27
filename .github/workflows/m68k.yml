@@ -1,0 +1,31 @@
+name: Build m68k Debian qemu image
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 0 1 * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install packages
+        run: sudo apt-get install debootstrap
+
+      - name: Generate Debian qemu image
+        run: |
+          dd if=/dev/zero of=debian-m68k.img bs=1024 count=1048576
+          mkfs.ext4 debian-m68k.img -L root
+          mkdir debian-m68k-root
+          sudo mount debian-m68k.img debian-m68k-root
+          sudo debootstrap --no-check-gpg --arch=m68k --foreign unstable debian-m68k-root http://ftp.ports.debian.org/debian-ports
+          sudo umount debian-m68k.img
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: debian-m68k
+          path: debian-m68k.img
+          if-no-files-found: error

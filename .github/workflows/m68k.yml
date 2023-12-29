@@ -30,3 +30,7 @@ jobs:
           path: debian-m68k.img
           if-no-files-found: error
 
+
+      # TODO: enable write permission in the settings.
+      # This creates a dummy commit every 50 days to avoid the workflow being disabled.
+      - uses: gautamkrishnar/keepalive-workflow@v1

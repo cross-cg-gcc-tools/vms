@@ -1,0 +1,57 @@
+name: Build Debian qemu image
+
+# TODO: check if this is needed.
+permissions:
+  contents: write
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [
+          { name: "armel", url: "http://ftp.debian.org/debian/" },
+          { name: "m68k", url: "http://ftp.ports.debian.org/debian-ports" },
+        ]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install packages
+        run: sudo apt-get install debootstrap
+
+      - name: Generate Debian qemu image
+        run: |
+          dd if=/dev/zero of=debian-${{ matrix.arch.name }}.img bs=1024 count=1048576
+          mkfs.ext4 debian-${{ matrix.arch.name }}.img -L root
+          mkdir debian-${{ matrix.arch.name }}-root
+          sudo mount debian-${{ matrix.arch.name }}.img debian-${{ matrix.arch.name }}-root
+          sudo debootstrap --no-check-gpg --arch=${{ matrix.arch.name }} --foreign unstable debian-${{ matrix.arch.name }}-root ${{ matrix.arch.url }}
+          sudo umount debian-${{ matrix.arch.name }}.img
+
+      - name: Compute tag name
+        id: tag_name
+        run: echo "TAG_NAME=$GITHUB_RUN_NUMBER.$GITHUB_RUN_ATTEMPT" >> $GITHUB_OUTPUT
+
+      - name: Create tag
+        if: github.ref == 'refs/heads/master'
+        uses: laputansoft/github-tag-action@v4.6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          create_annotated_tag: true
+          tag: master-${{ steps.tag_name.outputs.TAG_NAME }}
+
+      - name: Create release
+        if: github.ref == 'refs/heads/master'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: debian-${{ matrix.arch.name }}.img
+          asset_name: debian-${{ matrix.arch.name }}.img
+          tag: master-${{ steps.tag_name.outputs.TAG_NAME }}

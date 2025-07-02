@@ -15,6 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         arch: [
+          { name: "arm64", url: "http://ftp.debian.org/debian/" },
           { name: "armel", url: "http://ftp.debian.org/debian/" },
           { name: "m68k", url: "http://ftp.ports.debian.org/debian-ports" },
         ]

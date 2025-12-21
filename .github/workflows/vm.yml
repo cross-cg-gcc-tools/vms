@@ -28,7 +28,7 @@ jobs:
 
       - name: Generate Debian qemu image
         run: |
-          dd if=/dev/zero of=debian-${{ matrix.arch.name }}.img bs=1024 count=1048576
+          dd if=/dev/zero of=debian-${{ matrix.arch.name }}.img bs=1M count=15360
           mkfs.ext4 debian-${{ matrix.arch.name }}.img -L root
           mkdir debian-${{ matrix.arch.name }}-root
           sudo mount debian-${{ matrix.arch.name }}.img debian-${{ matrix.arch.name }}-root
